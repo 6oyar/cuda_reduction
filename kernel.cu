@@ -44,7 +44,7 @@ __global__ void reduce3(int *a)
 
 }
 
-__global__ void scalarMultiplying(int *a, int *b)
+__global__ void dot(int *a, int *b)
 {
 	int tid = threadIdx.x;
 	a[tid] *= b[tid];
@@ -69,7 +69,7 @@ int main()
 	cudaMemcpy(dev_a, a, N * sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(dev_b, b, N * sizeof(int), cudaMemcpyHostToDevice);
 
-	scalarMultiplying<<<1, N>>>(dev_a, dev_b);
+	dot <<<1, N>>>(dev_a, dev_b);
 	cudaMemcpy(c, dev_a, N * sizeof(int), cudaMemcpyDeviceToHost);
 	printf("%d\n", c[0]);//395 expected
 

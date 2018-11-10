@@ -1,0 +1,6 @@
+vc140.pdb
+/*.db
+/*.opendb
+Release
+.vs
+Debug
