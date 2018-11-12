@@ -1,4 +1,3 @@
-
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
@@ -57,6 +56,27 @@ __global__ void dot(int *a, int *b)
 	}
 }
 
+__global__ void reduce(int* input, int* output) 
+{
+	__shared__ int* data;
+
+	int tid = threadIdx.x;
+	data[tid] = input[tid];
+
+	__syncthreads();
+
+	for (int i = blockDim.x / 2; i > 0; i = i / 2)
+	{
+		if (tid < i)
+		{
+			data[tid] += data[tid + i];
+		}
+		__syncthreads();
+	}
+
+	if (tid == 0) output[blockIdx.x] = data[0];
+}
+
 int main()
 {
     int c[N] = { 0 };
@@ -75,20 +95,27 @@ int main()
 
 	cudaMemcpy(dev_a, a, N * sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(dev_b, b, N * sizeof(int), cudaMemcpyHostToDevice);
-	reduce1 << <1, N >>>(dev_a);
+	reduce1 <<<1, N >>>(dev_a);
 	cudaMemcpy(c, dev_a, N * sizeof(int), cudaMemcpyDeviceToHost);
 	printf("%d\n", c[0]);//41 expected
 
 	cudaMemcpy(dev_a, a, N * sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(dev_b, b, N * sizeof(int), cudaMemcpyHostToDevice);
-	reduce2 << <1, N >>>(dev_a);
+	reduce2 <<<1, N >>>(dev_a);
 	cudaMemcpy(c, dev_a, N * sizeof(int), cudaMemcpyDeviceToHost);
 	printf("%d\n", c[0]);//41 expected
 
 	cudaMemcpy(dev_a, a, N * sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(dev_b, b, N * sizeof(int), cudaMemcpyHostToDevice);
-	reduce3 << <1, N >>>(dev_a);
+	reduce3 <<<1, N >>>(dev_a);
 	cudaMemcpy(c, dev_a, N * sizeof(int), cudaMemcpyDeviceToHost);
+	printf("%d\n", c[0]); //41 expected
+
+
+	cudaMemcpy(dev_a, a, N * sizeof(int), cudaMemcpyHostToDevice);
+	cudaMemcpy(dev_b, b, N * sizeof(int), cudaMemcpyHostToDevice);
+	reduce <<<2, N / 2 >>>(dev_a, dev_b);
+	cudaMemcpy(c, dev_b, N * sizeof(int), cudaMemcpyDeviceToHost);
 	printf("%d\n", c[0]); //41 expected
 
 
